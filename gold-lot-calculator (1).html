@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>XAU Lot Calc</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#C8960C;--gold2:#F0B429;--gold-bg:#FFFBF0;--gold-border:#F0B42940;
+  --bg:#F7F8FA;--card:#FFFFFF;--card2:#F2F4F7;
+  --border:#E4E7ED;--border2:#CDD0D8;
+  --txt:#0F1117;--txt2:#5A6178;--txt3:#9AA0B4;
+  --buy:#0A7C3E;--buy-bg:#F0FAF4;--buy-border:#0A7C3E30;
+  --sell:#C0392B;--sell-bg:#FEF2F2;--sell-border:#C0392B30;
+  --blue:#1A5FA8;--blue-bg:#EEF4FF;
+  --radius:12px;--radius-sm:8px;--radius-xs:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--txt);font-family:'Sarabun',sans-serif;font-weight:400;line-height:1.55;min-height:100vh}
+
+/* NAV */
+.nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),#E8A200);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.nav-name{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);letter-spacing:.04em}
+.nav-sub{font-size:11px;color:var(--txt3);margin-top:1px}
+.nav-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:20px;color:var(--gold);font-weight:600}
+
+/* TABS */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);padding:0 16px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:14px 16px;font-size:13px;font-weight:500;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:'Sarabun',sans-serif}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.tab:hover:not(.active){color:var(--txt2)}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:680px;margin:0 auto;padding-bottom:40px}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:600;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0}
+
+/* FORM */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;font-weight:500;color:var(--txt2);margin-bottom:5px}
+.field input,.field select{width:100%;height:42px;background:var(--card2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;color:var(--txt);font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(200,150,12,.12)}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239AA0B4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+.field select option{background:#fff;font-family:'Sarabun',sans-serif}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11px;color:var(--txt3);margin-top:4px}
+
+/* DIRECTION */
+.dir-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.dir-btn{height:48px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--card2);color:var(--txt3);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.06em;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.dir-btn.buy.active{background:var(--buy-bg);border-color:var(--buy);color:var(--buy)}
+.dir-btn.sell.active{background:var(--sell-bg);border-color:var(--sell);color:var(--sell)}
+.dir-btn:hover:not(.active){border-color:var(--border2);color:var(--txt)}
+
+/* TABLE */
+.etable-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
+table.et{width:100%;border-collapse:collapse;min-width:300px}
+table.et th{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase;padding:0 6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.et td{padding:5px 5px;vertical-align:middle}
+table.et td input{width:100%;height:36px;background:var(--card2);border:1.5px solid var(--border);border-radius:var(--radius-xs);color:var(--txt);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:0 8px;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+table.et td input:focus{border-color:var(--gold);background:#fff}
+.lot-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--gold);text-align:right;white-space:nowrap;padding-right:4px}
+.del-btn{width:28px;height:28px;border-radius:var(--radius-xs);background:none;border:1px solid var(--border);color:var(--txt3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.del-btn:hover{border-color:var(--sell);color:var(--sell);background:var(--sell-bg)}
+
+/* CALC BTN */
+.calc-btn{width:100%;height:48px;margin-top:4px;background:linear-gradient(135deg,var(--gold),#A87400);border:none;border-radius:var(--radius-sm);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;letter-spacing:.08em;cursor:pointer;transition:transform .1s,opacity .15s;box-shadow:0 2px 8px rgba(200,150,12,.35)}
+.calc-btn:hover{opacity:.92}
+.calc-btn:active{transform:scale(.98)}
+
+/* RESULTS */
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.metric{background:var(--card2);border-radius:var(--radius-sm);padding:12px 14px}
+.metric .ml{font-size:11px;color:var(--txt3);font-weight:500;margin-bottom:3px}
+.metric .mv{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--gold)}
+.metric .mu{font-size:11px;color:var(--txt3);margin-top:1px}
+.rlist{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px}
+.rrow{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.rrow:last-child{border-bottom:none}
+.rl{color:var(--txt2)}.rv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.rv.g{color:var(--buy)}.rv.r{color:var(--sell)}.rv.gold{color:var(--gold)}.rv.b{color:var(--blue)}
+.entry-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;align-items:center}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:4px 8px;border-radius:20px;letter-spacing:.05em;white-space:nowrap}
+.badge.buy{background:var(--buy-bg);color:var(--buy);border:1px solid var(--buy-border)}
+.badge.sell{background:var(--sell-bg);color:var(--sell);border:1px solid var(--sell-border)}
+.ecell{text-align:center}
+.ecell .el{font-size:10px;color:var(--txt3);display:block;margin-bottom:1px}
+.ecell .ev{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.warn{display:none;margin-top:10px;padding:10px 14px;background:#FFFBF0;border-left:3px solid var(--gold2);border-radius:0 var(--radius-xs) var(--radius-xs) 0;font-size:12px;color:#7A5C0A;line-height:1.6}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--card);margin-bottom:12px}
+.upload-zone:hover{border-color:var(--gold);background:var(--gold-bg)}
+.upload-icon{font-size:36px;margin-bottom:10px;line-height:1}
+.upload-main{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--txt3)}
+.img-strip{display:none;margin-bottom:12px}
+.strip-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.strip-lbl{font-size:11px;font-weight:600;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase}
+.add-more{font-size:12px;padding:5px 12px;border-radius:20px;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);cursor:pointer;font-weight:500;font-family:'Sarabun',sans-serif}
+.add-more:hover{background:#FFF3C4}
+.thumb-row{display:flex;gap:8px;flex-wrap:wrap}
+.tw{position:relative;cursor:pointer;flex-shrink:0}
+.tw img{width:68px;height:54px;object-fit:cover;border-radius:var(--radius-xs);display:block}
+.tdel{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid var(--border);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);line-height:1;padding:0;box-shadow:var(--shadow)}
+.tdel:hover{border-color:var(--sell);color:var(--sell)}
+.big-prev{display:none;margin-bottom:12px;position:relative}
+.big-prev img{width:100%;border-radius:var(--radius);border:1px solid var(--border);display:block;box-shadow:var(--shadow)}
+.prev-badge{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid var(--border);border-radius:var(--radius-xs);padding:3px 10px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--txt2)}
+.rm-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.92);border:1px solid var(--border);color:var(--txt2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.rm-btn:hover{border-color:var(--sell);color:var(--sell)}
+.analyze-btn{display:none;width:100%;height:46px;background:var(--card);border:1.5px solid var(--gold);border-radius:var(--radius-sm);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.07em;cursor:pointer;transition:all .15s;margin-bottom:12px}
+.analyze-btn:hover{background:var(--gold-bg)}
+.spin-wrap{display:none;text-align:center;padding:20px}
+.spin-ring{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto 8px}
+.spin-txt{font-size:12px;color:var(--txt3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* AI RESULT */
+.ai-card{display:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:12px}
+.ai-hdr{background:var(--gold-bg);border-bottom:1px solid var(--gold-border);padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--gold);letter-spacing:.08em;text-transform:uppercase}
+.ai-body{padding:14px}
+.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sig-cell{background:var(--card2);border-radius:var(--radius-sm);padding:10px 8px;text-align:center}
+.sig-cell.buy-c{background:var(--buy-bg);border:1px solid var(--buy-border)}
+.sig-cell.sell-c{background:var(--sell-bg);border:1px solid var(--sell-border)}
+.sig-lbl{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+.sig-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600}
+.adx-row{display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:10px}
+.adx-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;min-width:52px}
+.adx-info{flex:1;min-width:0}
+.adx-ttl{font-size:10px;font-weight:600;color:var(--txt3);letter-spacing:.07em;text-transform:uppercase}
+.adx-desc{font-size:12px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adx-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;width:72px;flex-shrink:0}
+.adx-fill{height:100%;border-radius:3px}
+.zone-blk{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px}
+.zone-ttl{font-size:10px;font-weight:600;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.zone-row{display:flex;align-items:center}
+.zp{text-align:center;flex:0 0 80px}
+.zp .zl{font-size:10px;color:var(--txt3);margin-bottom:2px}
+.zp .zv{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600}
+.z-bar{flex:1;position:relative;height:2px;background:var(--gold-border);margin:0 10px}
+.z-span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--gold-bg);padding:0 6px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);white-space:nowrap}
+.plist{border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;gap:8px}
+.prow:last-child{border-bottom:none}
+.pl{color:var(--txt2);flex:1}
+.pp{font-family:'IBM Plex Mono',monospace;font-weight:600;flex-shrink:0}
+.use-btn{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold);cursor:pointer;font-weight:500;white-space:nowrap;font-family:'Sarabun',sans-serif}
+.use-btn:hover{background:#FFF3C4}
+.ai-sum{font-size:13px;color:var(--txt2);line-height:1.7;padding:10px 12px;background:var(--card2);border-radius:var(--radius-sm);margin-bottom:8px}
+.ai-wrn{font-size:12px;color:#7A5C0A;padding:9px 12px;background:#FFFBF0;border-left:3px solid var(--gold2);border-radius:0 var(--radius-xs) var(--radius-xs) 0;line-height:1.6}
+
+/* GUIDE */
+.g-step{display:flex;gap:12px;margin-bottom:16px}
+.g-num{width:28px;height:28px;border-radius:50%;background:var(--gold);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.g-body{flex:1}
+.g-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:4px}
+.g-desc{font-size:13px;color:var(--txt2);line-height:1.6}
+.g-code{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 12px;margin-top:8px;color:var(--blue);line-height:1.7;word-break:break-all}
+.g-link{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:8px 16px;background:var(--blue-bg);border:1px solid #1A5FA830;border-radius:var(--radius-xs);color:var(--blue);font-size:13px;font-weight:500;text-decoration:none}
+.g-link:hover{background:#DDE8F9}
+.divider{height:1px;background:var(--border);margin:4px 0 16px}
+.tip-box{background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--radius-sm);padding:12px 14px}
+.tip-title{font-size:12px;font-weight:600;color:var(--gold);margin-bottom:4px}
+.tip-desc{font-size:12px;color:var(--txt2);line-height:1.6}
+code{font-family:'IBM Plex Mono',monospace;background:var(--card2);padding:1px 5px;border-radius:4px;font-size:.9em}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">⚡</div>
+    <div>
+      <div class="nav-name">XAU LOT CALC</div>
+      <div class="nav-sub">XAUUSD Position Sizing</div>
+    </div>
+  </div>
+  <div class="nav-badge">v2.0</div>
+</nav>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('calc')">คำนวณ Lot</button>
+  <button class="tab" onclick="showTab('chart')">วิเคราะห์กราฟ</button>
+  <button class="tab" onclick="showTab('guide')">Deploy Guide</button>
+</div>
+
+<!-- PAGE: CALC -->
+<div id="page-calc" class="page active">
+  <div class="card">
+    <div class="card-title"><span class="card-title-dot"></span>ตั้งค่าบัญชี</div>
+    <div class="grid2">
+      <div class="field"><label>Balance (USD)</label><input type="number" id="balance" value="1000" min="1" step="100"/></div>
+      <div class="field"><label>Risk / Position (%)</label><input type="number" id="riskPct" value="10" min="0.1" max="100" step="0.5"/></div>
+    </div>
+    <div class="field">
+      <label>จำนวนไม้ที่จะเข้า</label>
+      <select id="numEntries" onchange="renderTable()">
+        <option value="1">1 ไม้</option><option value="2">2 ไม้</option>
+        <option value="3" selected>3 ไม้</option><option value="4">4 ไม้</option><option value="5">5 ไม้</option>
+      </select>
+      <div class="hint">Risk Amount จะถูกแบ่งเท่ากันทุกไม้</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="card-title-dot"></span>ทิศทาง</div>
+    <div class="dir-wrap">
+      <button class="dir-btn buy" onclick="setDir('buy')">▲ BUY</button>
+      <button class="dir-btn sell active" onclick="setDir('sell')">▼ SELL</button>
+    </div>
+    <div class="card-title" style="margin-top:4px"><span class="card-title-dot"></span>Entry &amp; Stop Loss</div>
+    <div class="etable-wrap">
+      <table class="et"><thead><tr><th>ไม้</th><th>Entry</th><th>Stop Loss</th><th style="text-align:right">Lot</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody></table>
+    </div>
+    <button class="calc-btn" onclick="calculate()">⚡ CALCULATE LOT SIZE</button>
+  </div>
+
+  <div id="resultWrap" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="card-title-dot"></span>ผลการคำนวณ</div>
+      <div class="metrics" id="metrics"></div>
+      <div class="rlist" id="rlist"></div>
+      <div id="ecards"></div>
+      <div class="warn" id="warnBox"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: CHART -->
+<div id="page-chart" class="page">
+  <div class="card">
+    <div class="card-title"><span class="card-title-dot"></span>อัปโหลดกราฟ XAUUSD</div>
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imgInput').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleImages(event)"/>
+      <div class="upload-icon">📊</div>
+      <div class="upload-main">คลิกหรือลากรูปมาวาง</div>
+      <div class="upload-sub">JPG, PNG · เลือกได้หลายรูปพร้อมกัน</div>
+    </div>
+    <div class="img-strip" id="imgStrip">
+      <div class="strip-hdr">
+        <span class="strip-lbl">รูปที่อัปโหลด</span>
+        <button class="add-more" onclick="document.getElementById('imgInput').click()">+ เพิ่มรูป</button>
+      </div>
+      <div class="thumb-row" id="thumbRow"></div>
+    </div>
+    <div class="big-prev" id="bigPrev">
+      <img id="bigImg" src="" alt="chart"/>
+      <div class="prev-badge" id="prevIdx">1 / 1</div>
+      <button class="rm-btn" onclick="removeCurrent()">✕</button>
+    </div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()">◆ วิเคราะห์กราฟด้วย AI</button>
+  </div>
+  <div class="spin-wrap" id="spinWrap">
+    <div class="spin-ring"></div>
+    <div class="spin-txt">AI กำลังวิเคราะห์กราฟ...</div>
+  </div>
+  <div class="ai-card" id="aiCard">
+    <div class="ai-hdr">◆ ผลวิเคราะห์ AI</div>
+    <div class="ai-body" id="aiBody"></div>
+  </div>
+</div>
+
+<!-- PAGE: GUIDE -->
+<div id="page-guide" class="page">
+  <div class="card">
+    <div class="card-title"><span class="card-title-dot"></span>Deploy บน GitHub Pages (ฟรี)</div>
+    <div class="g-step"><div class="g-num">1</div><div class="g-body">
+      <div class="g-title">สมัคร GitHub</div>
+      <div class="g-desc">ไปที่ github.com แล้วกด Sign up — ฟรีทั้งหมด</div>
+      <a class="g-link" href="https://github.com" target="_blank">→ github.com</a>
+    </div></div>
+    <div class="divider"></div>
+    <div class="g-step"><div class="g-num">2</div><div class="g-body">
+      <div class="g-title">สร้าง Repository ใหม่</div>
+      <div class="g-desc">กด <strong>New repository</strong> ตั้งชื่อว่า <code>xau-lot-calc</code> แล้วกด Create</div>
+    </div></div>
+    <div class="divider"></div>
+    <div class="g-step"><div class="g-num">3</div><div class="g-body">
+      <div class="g-title">อัปโหลดไฟล์ HTML</div>
+      <div class="g-desc">คลิก <strong>Add file → Upload files</strong> ลากไฟล์ <code>gold-lot-calculator.html</code> วาง แล้วเปลี่ยนชื่อเป็น <code>index.html</code></div>
+    </div></div>
+    <div class="divider"></div>
+    <div class="g-step"><div class="g-num">4</div><div class="g-body">
+      <div class="g-title">เปิด GitHub Pages</div>
+      <div class="g-desc">ไปที่ <strong>Settings → Pages → Source</strong> เลือก <code>main branch</code> แล้วกด Save</div>
+    </div></div>
+    <div class="divider"></div>
+    <div class="g-step"><div class="g-num">5</div><div class="g-body">
+      <div class="g-title">ได้ Link แล้ว!</div>
+      <div class="g-desc">รอประมาณ 1–2 นาที จะได้ URL:</div>
+      <div class="g-code">https://username.github.io/xau-lot-calc/</div>
+    </div></div>
+    <div class="divider"></div>
+    <div class="tip-box">
+      <div class="tip-title">⚡ ทางเลือกเร็วกว่า — Netlify Drop</div>
+      <div class="tip-desc">ไม่ต้องสมัคร แค่ลากไฟล์วางที่ netlify.com/drop ได้ link ภายใน 10 วินาที</div>
+      <a class="g-link" href="https://app.netlify.com/drop" target="_blank" style="font-size:12px;margin-top:8px">→ app.netlify.com/drop</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let dir='sell', entryCount=3;
+let images=[], curIdx=0, imageBase64=null;
+
+function showTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['calc','chart','guide'][i]===id));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+}
+
+function setDir(d){
+  dir=d;
+  document.querySelectorAll('.dir-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.dir-btn.'+d).classList.add('active');
+}
+
+function renderTable(){
+  entryCount=parseInt(document.getElementById('numEntries').value);
+  const tb=document.getElementById('tbody');
+  const prev=[];
+  tb.querySelectorAll('tr').forEach(tr=>prev.push({e:tr.querySelector('.ei')?.value||'',s:tr.querySelector('.si')?.value||''}));
+  tb.innerHTML='';
+  for(let i=0;i<entryCount;i++){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--txt3);white-space:nowrap;padding-left:4px">M${i+1}</td>
+      <td><input class="ei" type="number" placeholder="0.00" step="0.01" value="${prev[i]?.e||''}"/></td>
+      <td><input class="si" type="number" placeholder="0.00" step="0.01" value="${prev[i]?.s||''}"/></td>
+      <td class="lot-val" id="lv${i}">—</td>
+      <td><button class="del-btn" onclick="clearRow(${i})">✕</button></td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function clearRow(i){
+  const rows=document.getElementById('tbody').querySelectorAll('tr');
+  if(rows[i]){rows[i].querySelector('.ei').value='';rows[i].querySelector('.si').value='';document.getElementById('lv'+i).textContent='—';}
+}
+
+function calculate(){
+  const bal=parseFloat(document.getElementById('balance').value)||0;
+  const rp=parseFloat(document.getElementById('riskPct').value)||0;
+  const rows=document.getElementById('tbody').querySelectorAll('tr');
+  const rpe=(bal*rp/100)/entryCount;
+  const res=[];
+  rows.forEach((tr,i)=>{
+    const e=parseFloat(tr.querySelector('.ei').value);
+    const s=parseFloat(tr.querySelector('.si').value);
+    if(!e||!s){document.getElementById('lv'+i).textContent='—';return;}
+    const dist=Math.abs(e-s);if(!dist)return;
+    const lot=rpe/(dist*10);
+    document.getElementById('lv'+i).textContent=lot.toFixed(2);
+    res.push({i:i+1,e,s,dist,lot});
+  });
+  if(!res.length){alert('กรุณากรอก Entry และ SL อย่างน้อย 1 ไม้');return;}
+  const totalRisk=rpe*res.length;
+  const totalLot=res.reduce((a,r)=>a+r.lot,0);
+  const avgE=res.reduce((a,r)=>a+r.e,0)/res.length;
+  document.getElementById('resultWrap').style.display='block';
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="ml">Total Risk</div><div class="mv">$${totalRisk.toFixed(2)}</div><div class="mu">${(totalRisk/bal*100).toFixed(1)}% ของบัญชี</div></div>
+    <div class="metric"><div class="ml">Total Lot</div><div class="mv">${totalLot.toFixed(2)}</div><div class="mu">${res.length} ไม้</div></div>
+    <div class="metric"><div class="ml">Risk / ไม้</div><div class="mv">$${rpe.toFixed(2)}</div><div class="mu">แบ่งเท่ากัน</div></div>
+    <div class="metric"><div class="ml">Entry เฉลี่ย</div><div class="mv">${avgE.toFixed(2)}</div><div class="mu">USD/oz</div></div>`;
+  document.getElementById('rlist').innerHTML=`
+    <div class="rrow"><span class="rl">Balance</span><span class="rv gold">$${bal.toLocaleString()}</span></div>
+    <div class="rrow"><span class="rl">Risk %</span><span class="rv">${rp}%</span></div>
+    <div class="rrow"><span class="rl">ทิศทาง</span><span class="rv ${dir==='buy'?'g':'r'}">${dir==='buy'?'▲ BUY':'▼ SELL'}</span></div>
+    <div class="rrow"><span class="rl">จำนวนไม้</span><span class="rv b">${res.length} ไม้</span></div>`;
+  document.getElementById('ecards').innerHTML=res.map(r=>`
+    <div class="entry-card">
+      <span class="badge ${dir}">${dir.toUpperCase()} ${r.i}</span>
+      <div class="ecell"><span class="el">Entry</span><span class="ev">${r.e.toFixed(2)}</span></div>
+      <div class="ecell"><span class="el">SL Dist</span><span class="ev" style="color:var(--sell)">${r.dist.toFixed(1)}</span></div>
+      <div class="ecell"><span class="el">Lot</span><span class="ev" style="color:var(--gold)">${r.lot.toFixed(2)}</span></div>
+    </div>`).join('');
+  const wb=document.getElementById('warnBox');
+  const w=[];
+  if(rp>20)w.push('⚠️ Risk สูงกว่า 20% — ความเสี่ยงสูงมาก');
+  if(totalLot>5)w.push('⚠️ Total Lot '+totalLot.toFixed(2)+' — ตรวจสอบ Margin ที่มี');
+  if(w.length){wb.style.display='block';wb.innerHTML=w.join('<br>')}else wb.style.display='none';
+  document.getElementById('resultWrap').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  loadFiles(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')));
+}
+function handleImages(e){loadFiles(Array.from(e.target.files));e.target.value='';}
+function loadFiles(files){
+  if(!files.length)return;
+  let done=0;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      images.push({b64:ev.target.result.split(',')[1],url:ev.target.result});
+      if(++done===files.length){curIdx=images.length-files.length;renderImgUI();}
+    };
+    r.readAsDataURL(f);
+  });
+}
+function renderImgUI(){
+  const uz=document.getElementById('uploadZone');
+  const strip=document.getElementById('imgStrip');
+  const big=document.getElementById('bigPrev');
+  const ab=document.getElementById('analyzeBtn');
+  if(!images.length){uz.style.display='block';strip.style.display='none';big.style.display='none';ab.style.display='none';return;}
+  uz.style.display='none';strip.style.display='block';big.style.display='block';ab.style.display='block';
+  const tr=document.getElementById('thumbRow');tr.innerHTML='';
+  images.forEach((img,i)=>{
+    const w=document.createElement('div');w.className='tw';
+    const im=document.createElement('img');im.src=img.url;
+    im.style.cssText=`width:68px;height:54px;object-fit:cover;border-radius:6px;border:2px solid ${i===curIdx?'var(--gold)':'var(--border)'};display:block;`;
+    im.onclick=()=>{curIdx=i;renderImgUI();};
+    const d=document.createElement('button');d.className='tdel';d.textContent='✕';
+    d.onclick=ev=>{ev.stopPropagation();images.splice(i,1);if(curIdx>=images.length)curIdx=Math.max(0,images.length-1);renderImgUI();};
+    w.appendChild(im);w.appendChild(d);tr.appendChild(w);
+  });
+  document.getElementById('bigImg').src=images[curIdx].url;
+  document.getElementById('prevIdx').textContent=`${curIdx+1} / ${images.length}`;
+  imageBase64=images[curIdx].b64;
+}
+function removeCurrent(){
+  images.splice(curIdx,1);
+  if(curIdx>=images.length)curIdx=Math.max(0,images.length-1);
+  renderImgUI();
+  if(!images.length){document.getElementById('aiCard').style.display='none';}
+}
+
+async function analyzeImage(){
+  if(!imageBase64)return;
+  document.getElementById('analyzeBtn').style.display='none';
+  document.getElementById('spinWrap').style.display='block';
+  document.getElementById('aiCard').style.display='none';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imageBase64}},
+        {type:'text',text:`คุณคือผู้เชี่ยวชาญ Price Action และ Technical Analysis สำหรับ XAUUSD timeframe 5m
+
+กฎ ENTRY ZONE:
+- Entry Zone = ราคาภายในตัวแท่งเทียน (Candle Body) เท่านั้น ห้ามใช้ไส้เทียน (Wick)
+- ถ้ามีเส้นสีส้มแนวนอน → ราคาระหว่างเส้นคือ Entry Zone
+- Entry = ราคากลางหรือ Open/Close ของแท่งเทียนใน Zone
+
+กฎ STOP LOSS:
+- SL ต้องห่างจาก Entry 300–1000 จุด (0.30–1.00 USD)
+- SELL: SL อยู่เหนือ Entry | BUY: SL อยู่ใต้ Entry
+
+กฎ ADX:
+- ADX > 25 = มี Trend | ADX < 20 = Sideway | ADX 20–25 = ระวัง
+
+ตอบเป็น JSON เท่านั้น ไม่มีข้อความอื่น:
+{"direction":"BUY หรือ SELL","signal_confidence":"HIGH หรือ MEDIUM หรือ LOW","trend":"UPTREND หรือ DOWNTREND หรือ SIDEWAY","adx_value":ตัวเลขหรือnull,"adx_comment":"สั้นๆ","entry_zone_high":ราคา,"entry_zone_low":ราคา,"entries":[{"price":ราคา,"label":"Entry 1 (Body)"},{"price":ราคา,"label":"Entry 2 (Body)"}],"stop_loss":ราคา,"sl_distance_points":จำนวน,"key_levels":[{"price":ราคา,"label":"ชื่อ","type":"support หรือ resistance หรือ orange_line"}],"summary":"2–3 ประโยคภาษาไทย","warning":"คำเตือนหรือnull"}`}
+      ]}]})
+    });
+    const data=await res.json();
+    const raw=data.content?.[0]?.text||'';
+    document.getElementById('spinWrap').style.display='none';
+    document.getElementById('analyzeBtn').style.display='block';
+    let p=null;
+    try{const m=raw.match(/\{[\s\S]*\}/);if(m)p=JSON.parse(m[0]);}catch(e){}
+    const card=document.getElementById('aiCard');card.style.display='block';
+    const body=document.getElementById('aiBody');
+    if(p){
+      const dc=p.direction==='BUY'?'var(--buy)':'var(--sell)';
+      const tc=p.trend==='UPTREND'?'var(--buy)':p.trend==='DOWNTREND'?'var(--sell)':'var(--gold)';
+      const cc=p.signal_confidence==='HIGH'?'var(--buy)':p.signal_confidence==='MEDIUM'?'var(--gold)':'var(--sell)';
+      const ti=p.trend==='UPTREND'?'▲':p.trend==='DOWNTREND'?'▼':'↔';
+      const dc2=p.direction==='BUY'?'buy-c':'sell-c';
+      if(p.direction)setDir(p.direction.toLowerCase());
+      let h=`<div class="sig-grid">
+        <div class="sig-cell ${dc2}"><div class="sig-lbl">Signal</div><div class="sig-val" style="color:${dc}">${p.direction||'—'}</div></div>
+        <div class="sig-cell"><div class="sig-lbl">Trend</div><div class="sig-val" style="color:${tc};font-size:14px">${ti} ${p.trend||'—'}</div></div>
+        <div class="sig-cell"><div class="sig-lbl">Confidence</div><div class="sig-val" style="color:${cc};font-size:14px">${p.signal_confidence||'—'}</div></div>
+      </div>`;
+      if(p.adx_value!=null){
+        const ac=p.adx_value>25?'var(--buy)':p.adx_value<20?'var(--sell)':'var(--gold)';
+        h+=`<div class="adx-row">
+          <div class="adx-num" style="color:${ac}">${p.adx_value}</div>
+          <div class="adx-info"><div class="adx-ttl">ADX (14)</div><div class="adx-desc">${p.adx_comment||''}</div></div>
+          <div class="adx-track"><div class="adx-fill" style="width:${Math.min(100,(p.adx_value/60*100)).toFixed(0)}%;background:${ac}"></div></div>
+        </div>`;
+      }
+      if(p.entry_zone_high&&p.entry_zone_low){
+        h+=`<div class="zone-blk">
+          <div class="zone-ttl">Entry Zone — Candle Body Only</div>
+          <div class="zone-row">
+            <div class="zp"><div class="zl">Zone High</div><div class="zv">${p.entry_zone_high}</div></div>
+            <div class="z-bar"><span class="z-span">${(p.entry_zone_high-p.entry_zone_low).toFixed(2)}</span></div>
+            <div class="zp"><div class="zl">Zone Low</div><div class="zv">${p.entry_zone_low}</div></div>
+          </div>
+        </div>`;
+      }
+      h+=`<div class="plist">`;
+      p.entries?.forEach((e,i)=>{h+=`<div class="prow"><span class="pl">${e.label||'Entry '+(i+1)}</span><span class="pp">${e.price}</span><button class="use-btn" onclick="fillEntry(${i},${e.price})">ใส่ไม้ ${i+1}</button></div>`;});
+      if(p.stop_loss){h+=`<div class="prow"><span class="pl">Stop Loss <span style="font-size:10px;color:var(--txt3)">(${p.sl_distance_points||'—'} pts)</span></span><span class="pp" style="color:var(--sell)">${p.stop_loss}</span><button class="use-btn" onclick="fillAllSL(${p.stop_loss})">ใส่ SL ทุกไม้</button></div>`;}
+      p.key_levels?.forEach(lv=>{
+        const lc=lv.type==='resistance'?'var(--sell)':lv.type==='support'?'var(--buy)':'var(--gold)';
+        h+=`<div class="prow"><span class="pl" style="color:${lc}">${lv.label}</span><span class="pp">${lv.price}</span><span style="font-size:10px;color:var(--txt3)">${lv.type||''}</span></div>`;
+      });
+      h+=`</div>`;
+      if(p.summary)h+=`<div class="ai-sum">${p.summary}</div>`;
+      if(p.warning)h+=`<div class="ai-wrn">⚠️ ${p.warning}</div>`;
+      body.innerHTML=h;
+    } else {
+      body.innerHTML=`<div class="ai-sum">${raw}</div>`;
+    }
+  }catch(err){
+    document.getElementById('spinWrap').style.display='none';
+    document.getElementById('analyzeBtn').style.display='block';
+    document.getElementById('aiCard').style.display='block';
+    document.getElementById('aiBody').innerHTML=`<div class="ai-sum" style="color:var(--sell)">เกิดข้อผิดพลาด: ${err.message}</div>`;
+  }
+}
+
+function fillEntry(i,price){
+  showTab('calc');
+  setTimeout(()=>{
+    const rows=document.getElementById('tbody').querySelectorAll('tr');
+    if(rows[i])rows[i].querySelector('.ei').value=price;
+  },50);
+}
+function fillAllSL(price){
+  showTab('calc');
+  setTimeout(()=>{document.getElementById('tbody').querySelectorAll('.si').forEach(inp=>inp.value=price);},50);
+}
+
+renderTable();
+setTimeout(()=>{
+  const rows=document.getElementById('tbody').querySelectorAll('tr');
+  [{e:4570,s:4585},{e:4557,s:4570},{e:4540,s:4555}].forEach((p,i)=>{
+    if(rows[i]){rows[i].querySelector('.ei').value=p.e;rows[i].querySelector('.si').value=p.s;}
+  });
+},50);
+</script>
+</body>
+</html>
